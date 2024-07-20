@@ -1,12 +1,44 @@
 import { generateData } from "..";
 
+import { matchersWithOptions } from "jest-json-schema";
+expect.extend(matchersWithOptions({
+  verbose: true
+}));
+
 describe("generate data", () => {
+
+    //
+    // Makes data from a schema and then checks if that data matches the schema.
+    //
+    function makeData(schema: any) {
+        const data = generateData(schema);
+
+        for (const validItem of data.valid) {
+            expect(validItem).toMatchSchema(schema);
+        }
+
+        for (const invalidItem of data.invalid) {
+            try {
+                expect(invalidItem).not.toMatchSchema(schema);
+            }
+            catch (err) {
+                console.error(`An invalid item seems to have matched the schema!`);
+                console.error(`Invalid item:`);
+                console.error(invalidItem);
+                console.error(`Schema:`);
+                console.error(schema);
+                throw err;    
+            }
+        }
+
+        return data;
+    }
 
     test("simple number", () => {
         const schema = {
             type: "number",
         };
-        expect(generateData(schema)).toEqual({
+        expect(makeData(schema)).toEqual({
             valid: [
                 -Number.MAX_VALUE,
                 -100,
@@ -37,7 +69,7 @@ describe("generate data", () => {
             minimum: 5,
             maximum: 10,
         };
-        expect(generateData(schema)).toEqual({
+        expect(makeData(schema)).toEqual({
             valid: [
                 5,
                 10,
@@ -69,7 +101,7 @@ describe("generate data", () => {
             minimum: -20,
             maximum: -12,
         };
-        expect(generateData(schema)).toEqual({
+        expect(makeData(schema)).toEqual({
             valid: [
                 -20,
                 -12
@@ -102,7 +134,7 @@ describe("generate data", () => {
             minimum: -11,
             maximum: 11,
         };
-        expect(generateData(schema)).toEqual({
+        expect(makeData(schema)).toEqual({
             valid: [
                 -11,
                 -10,
@@ -133,7 +165,7 @@ describe("generate data", () => {
         const schema = {
             type: "string",
         };
-        expect(generateData(schema)).toEqual({
+        expect(makeData(schema)).toEqual({
             valid: [
                 "",
                 "a",
@@ -152,7 +184,7 @@ describe("generate data", () => {
         const schema = {
             type: "boolean",
         };
-        expect(generateData(schema)).toEqual({
+        expect(makeData(schema)).toEqual({
             valid: [
                 true,
                 false,
@@ -183,7 +215,7 @@ describe("generate data", () => {
                 },
             },
         };
-        expect(generateData(schema)).toEqual({
+        expect(makeData(schema)).toEqual({
             valid: [
                 { height: 2, age: 18 },
                 { height: 10, age: 18 },
@@ -232,7 +264,7 @@ describe("generate data", () => {
                 type: "boolean",
             },
         };
-        expect(generateData(schema)).toEqual({
+        expect(makeData(schema)).toEqual({
             valid: [ 
                 [], 
                 [ true ], 
