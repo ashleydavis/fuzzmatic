@@ -6,6 +6,16 @@ export interface ISchema {
     // The data type being defined.
     //
     type: string;
+}
+
+//
+// Definition of a number schema.
+//
+export interface INumberSchema extends ISchema {
+    //
+    // The data type being defined.
+    //
+    type: "number";
 
     //
     // Minimum value.
@@ -16,6 +26,26 @@ export interface ISchema {
     // Maximum value.
     //
     maximum?: number;
+}
+
+//
+// Definition of a string schema.
+//
+export interface IStringSchema extends ISchema {
+    //
+    // The data type being defined.
+    //
+    type: "string";
+}
+
+//
+// Definition of a number schema.
+//
+export interface IObjectSchema extends ISchema {
+    //
+    // The data type being defined.
+    //
+    type: "object";
 
     //
     // Properties of an object.
@@ -43,7 +73,7 @@ export interface IGeneratedData {
 //
 // Generates valid and invalid options for a number.
 //
-function number(schema: ISchema): IGeneratedData {
+function number(schema: INumberSchema): IGeneratedData {
     let minValue = schema.minimum !== undefined
         ? schema.minimum
         : -Number.MAX_VALUE;
@@ -107,7 +137,7 @@ function number(schema: ISchema): IGeneratedData {
 //
 // Generates valid and invalid options for a string.
 //
-function string(schema: ISchema): IGeneratedData {
+function string(schema: IStringSchema): IGeneratedData {
 
     const valid: any[] = [];
     const invalid: any[] = [];
@@ -171,7 +201,7 @@ function generateCombinations(fields: { name: string, data: IGeneratedData }[]):
 //
 // Generates valid and invalid options for an object.
 //
-function object(schema: ISchema): IGeneratedData {
+function object(schema: IObjectSchema): IGeneratedData {
     const fields = [];
     if (schema.properties) {
         for (const [field, fieldSchema] of Object.entries(schema.properties)) {
@@ -188,7 +218,11 @@ function object(schema: ISchema): IGeneratedData {
     }
 }
 
-const types: any = {
+interface ISchemaTypeMap {
+    [type: string]: (schema: ISchema) => IGeneratedData;
+}
+
+const schemaTypeMap = {
     number,
     string,
     object,
@@ -198,7 +232,7 @@ const types: any = {
 // Generate sets of valid and invalid data for a given schema.
 //
 export function generateData(schema: ISchema): IGeneratedData {
-    const typeHandler = types[schema.type];
+    const typeHandler = (schemaTypeMap as ISchemaTypeMap)[schema.type];
     if (!typeHandler) {
         throw new Error(`Unknown type: ${schema.type}`);
     }
