@@ -66,6 +66,21 @@ export interface IObjectSchema extends ISchema {
 }
 
 //
+// Definition of an array schema.
+//
+export interface IArraySchema extends ISchema {
+    //
+    // The data type being defined.
+    //
+    type: "array";
+
+    //
+    // Nested schema for each item in the array.
+    //
+    items?: ISchema;
+}
+
+//
 // Represents generated data.
 //
 export interface IGeneratedData {
@@ -248,6 +263,40 @@ function object(schema: IObjectSchema): IGeneratedData {
     }
 }
 
+//
+// Generates valid and invalid options for an array.
+//
+function array(schema: IArraySchema): IGeneratedData {
+
+    if (!schema.items) {
+        throw new Error("Array schema must have items defined.");
+    }
+
+    const itemsData = generateData(schema.items);
+
+    const valid: any[] = [];
+    const invalid: any[] = [];
+
+    valid.push([]);
+    for (const validItem of itemsData.valid) {
+        valid.push([validItem]);
+    }
+    valid.push([itemsData.valid[0], itemsData.valid[0]]);
+
+    for (const invalidItem of itemsData.invalid) {
+        invalid.push([invalidItem]);
+    }   
+
+    invalid.push(undefined);
+    invalid.push(null);
+    invalid.push(42);
+    invalid.push("a");
+    invalid.push(true);
+    invalid.push({});
+
+    return { valid, invalid };
+}
+
 interface ISchemaTypeMap {
     [type: string]: (schema: ISchema) => IGeneratedData;
 }
@@ -257,6 +306,7 @@ const schemaTypeMap = {
     string,
     boolean,
     object,
+    array,
 };
 
 //

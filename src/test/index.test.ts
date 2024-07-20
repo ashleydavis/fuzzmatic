@@ -224,4 +224,34 @@ describe("generate data", () => {
             ],
         });
     });
+
+    test("array", () => {
+        const schema = {
+            type: "array",
+            items: {
+                type: "boolean",
+            },
+        };
+        expect(generateData(schema)).toEqual({
+            valid: [ 
+                [], 
+                [ true ], 
+                [ false ], 
+                [ true, true ],
+            ],
+            invalid: [
+              [ undefined ], 
+              [ null ],
+              [ 42 ],        
+              [ 'a' ],
+              [ {} ],        
+              undefined,
+              null,
+              42,
+              'a',
+              true,
+              {},
+            ],
+          });
+    });
 });
