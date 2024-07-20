@@ -1,0 +1,55 @@
+{
+    "name": "fuzzer",
+    "version": "0.0.1",
+    "description": "Generates sets of data for fuzz testing.",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
+    "scripts": {
+        "start": "node ./build/cli.js ./src/test/schemas/simple-number.yaml",
+        "s": "npm start",
+        "start:dev": "nodemon",
+        "sd": "npm run start:dev",
+        "clean": "rm -rf build tsconfig.tsbuildinfo",
+        "c": "npm run compile",
+        "compile": "tsc --incremental",
+        "bw": "npm run build:watch",
+        "build:watch": "tsc  --incremental --watch",
+        "prepublishOnly": "npm test && npm run clean && npm run compile",
+        "t": "npm run test",
+        "test": "jest",
+        "tw": "npm run test:watch",
+        "test:watch": "jest --watch"
+    },
+    "bin": {
+        "fuzzer": "./bin/cli"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://ashleydavis@github.com/ashleydavis/fuzzer.git"
+    },
+    "keywords": [
+        "fuzz testing",
+        "fuzzing",
+        "testing"
+    ],
+    "author": "ashley@codecapers.com.au",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ashleydavis/fuzzer/issues"
+    },
+    "homepage": "https://github.com/ashleydavis/fuzzer#readme",
+    "devDependencies": {
+        "@types/jest": "^29.5.12",
+        "@types/minimist": "^1.2.5",
+        "@types/node": "^20.14.11",
+        "jest": "^29.7.0",
+        "nodemon": "^3.1.4",
+        "ts-jest": "^29.2.2",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.5.3"
+    },
+    "dependencies": {
+        "minimist": "^1.2.8",
+        "yaml": "^2.4.5"
+    }
+}
