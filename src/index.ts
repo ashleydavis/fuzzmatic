@@ -39,6 +39,16 @@ export interface IStringSchema extends ISchema {
 }
 
 //
+// Definition of a boolean schema.
+//
+export interface IBooleanSchema extends ISchema {
+    //
+    // The data type being defined.
+    //
+    type: "boolean";
+}
+
+//
 // Definition of a number schema.
 //
 export interface IObjectSchema extends ISchema {
@@ -155,6 +165,26 @@ function string(schema: IStringSchema): IGeneratedData {
 }
 
 //
+// Generates valid and invalid options for a boolean.
+//
+function boolean(schema: IBooleanSchema): IGeneratedData {
+
+    const valid: any[] = [];
+    const invalid: any[] = [];
+
+    valid.push(true);
+    valid.push(false);
+
+    invalid.push(undefined);
+    invalid.push(null);
+    invalid.push(42);
+    invalid.push("a");
+    invalid.push({});
+
+    return { valid, invalid };
+}
+
+//
 // Generate valid and invalid combination of the set of fields.
 //
 function generateCombinations(fields: { name: string, data: IGeneratedData }[]): IGeneratedData {
@@ -225,6 +255,7 @@ interface ISchemaTypeMap {
 const schemaTypeMap = {
     number,
     string,
+    boolean,
     object,
 };
 

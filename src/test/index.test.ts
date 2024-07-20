@@ -146,8 +146,26 @@ describe("generate data", () => {
                 {},
             ],
         });
-
     });
+
+    test("boolean", () => {
+        const schema = {
+            type: "boolean",
+        };
+        expect(generateData(schema)).toEqual({
+            valid: [
+                true,
+                false,
+            ],
+            invalid: [
+                undefined,
+                null,
+                42,
+                "a",
+                {},
+            ],
+        });
+    });    
 
     test("object", () => {
         const schema = {
