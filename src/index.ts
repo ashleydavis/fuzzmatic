@@ -63,6 +63,12 @@ export interface IObjectSchema extends ISchema {
     properties?: {
         [field: string]: ISchema;
     };
+
+    //
+    // The names of fields that must be present.
+    // All other fields are optional.
+    //
+    required?: string[];
 }
 
 //
@@ -200,11 +206,65 @@ function boolean(schema: IBooleanSchema): IGeneratedData {
 }
 
 //
+// A named field of an object.
+//
+interface IField {
+    //
+    // The name of the field.
+    //
+    name: string;
+
+    //
+    // Data for the field.
+    //
+    data: IGeneratedData;
+
+    //
+    // Set to true when field is required or false otherwise.
+    //
+    required: boolean;
+}
+
+//
 // Generate valid and invalid combination of the set of fields.
 //
-function generateCombinations(fields: { name: string, data: IGeneratedData }[]): IGeneratedData {
+function generateCombinations(fields: IField[]): IGeneratedData {
+
     const valid: any[] = [];
     const invalid: any[] = [];
+
+    //
+    // Build the minimal valid object.
+    //
+    const minimalValidObject: any = {};    
+    for (const { name, data, required } of fields) {
+        if (required) {
+            minimalValidObject[name] = data.valid[0];  
+        }
+    }
+
+    valid.push(minimalValidObject); // Note: this could be an empty object if no properties are actually required.
+
+    if (Object.keys(minimalValidObject).length > 0) {
+        //
+        // If the minimal valid object is not empty, then the empty object is an invalid value.
+        //
+        invalid.push({});
+    }
+
+    //
+    // Start with the minimal valid object and vary each of the fields across valid values.
+    //
+    for (const { name, data, required } of fields) {
+        if (required) {
+            for (const value of data.valid.slice(1)) {
+                valid.push({ 
+                    ...minimalValidObject,
+                    [name]: value,
+                });
+            }
+        }
+    }
 
     //
     // Build the canoncial valid object.
@@ -231,14 +291,26 @@ function generateCombinations(fields: { name: string, data: IGeneratedData }[]):
     //
     // Start with the valid object and vary each of the fields across invalid values.
     //
-    for (const { name, data } of fields) {
+    for (const { name, data, required } of fields) {
         for (const value of data.invalid) {
+            if (value === undefined) {
+                if (!required) {
+                    // An undefined value is only invalid if the field is required.
+                    continue;
+                }
+            }
             invalid.push({ 
                 ...validObject,
                 [name]: value,
             });
         }
     }
+
+    invalid.push(undefined);
+    invalid.push(null);
+    invalid.push(42);
+    invalid.push("a");
+    invalid.push(true);
 
     return { valid, invalid };
 }
@@ -249,10 +321,13 @@ function generateCombinations(fields: { name: string, data: IGeneratedData }[]):
 function object(schema: IObjectSchema): IGeneratedData {
     const fields = [];
     if (schema.properties) {
+        const requiredFieldSet = new Set(schema.required || []);
+
         for (const [field, fieldSchema] of Object.entries(schema.properties)) {
             fields.push({
                 name: field,
                 data: generateData(fieldSchema),
+                required: requiredFieldSet.has(field),
             });
         }
 
