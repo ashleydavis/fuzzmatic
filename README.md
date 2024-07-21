@@ -1,4 +1,4 @@
-# fuzzer
+# fuzzmatic
 
 Generates sets of data for fuzz testing.
 
@@ -7,26 +7,28 @@ Generates sets of data for fuzz testing.
 ## Features
 
 - Generates sets of valid and invalid data that can be used to test JavaScript/TypeScript functions and REST APIs.
-- Input a JSON schema in JSON or YAML format.
-- Outputs JSON format.
+- Generates data from a JSON schema.
+- CLI tool:
+    - Input a JSON schema in JSON or YAML format.
+    - Outputs JSON format.
 
 ## CLI usage
 
 Install it:
 
 ```bash
-npm install -g fuzzer
+npm install -g fuzzmatic
 ```
 
 Run it on a JSON schema:
 
 ```bash
-fuzzer a-json-schema.json
+fuzzmatic a-json-schema.json
 ```
 Run it on a JSON schema in YAML format:
 
 ```bash
-fuzzer a-json-schema.yaml
+fuzzmatic a-json-schema.yaml
 ```
 
 Generated data is output to the console.
@@ -36,13 +38,13 @@ Generated data is output to the console.
 Install it in your project:
 
 ```bash
-npm install fuzzer
+npm install fuzzmatic
 ```
 
 Required it in your code:
 
 ```javascript
-const fuzzer = require("fuzzer");
+const fuzzmatic = require("fuzzmatic");
 ```
 
 Load your JSON schema and generate data from it:
@@ -51,7 +53,7 @@ Load your JSON schema and generate data from it:
 const fs = require("fs");
 
 const schema = JSON.parse(fs.readFileSync("a-json-schema.json", "utf-8"));
-const data = fuzzer.generateData(schema);
+const data = fuzzmatic.generateData(schema);
 console.log(data);
 ```
 
@@ -68,7 +70,7 @@ const fs = require("fs");
 const yaml = require("yaml");
 
 const schema = yaml.parse(fs.readFileSync("a-json-schema.yaml", "utf-8"));
-const data = fuzzer.generateData(schema);
+const data = fuzzmatic.generateData(schema);
 console.log(data);
 ```
 
@@ -79,7 +81,7 @@ console.log(data);
 Clone it from GitHub:
 
 ```bash
-git clone git@github.com:ashleydavis/fuzzer.git
+git clone git@github.com:ashleydavis/fuzzmatic.git
 ```
 
 ## Compiling the TypeScript code
@@ -89,7 +91,7 @@ Open folder in Visual Studio Code and hit Ctrl+Shift+B
 Or
 
 ```bash
-cd fuzzer
+cd fuzzmatic
 npm run compile
 ```
 

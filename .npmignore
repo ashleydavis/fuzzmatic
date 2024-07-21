@@ -12,3 +12,4 @@ tsconfig.json
 nodemon.json
 jest.config.js
 .env
+todo.md

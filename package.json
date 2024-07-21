@@ -1,5 +1,5 @@
 {
-    "name": "fuzzer",
+    "name": "fuzzmatic",
     "version": "0.0.1",
     "description": "Generates sets of data for fuzz testing.",
     "main": "build/index.js",
@@ -21,11 +21,11 @@
         "test:watch": "jest --watch"
     },
     "bin": {
-        "fuzzer": "./bin/cli"
+        "fuzzmatic": "./bin/cli"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://ashleydavis@github.com/ashleydavis/fuzzer.git"
+        "url": "git+https://ashleydavis@github.com/ashleydavis/fuzzmatic.git"
     },
     "keywords": [
         "fuzz testing",
@@ -35,9 +35,9 @@
     "author": "ashley@codecapers.com.au",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/ashleydavis/fuzzer/issues"
+        "url": "https://github.com/ashleydavis/fuzzmatic/issues"
     },
-    "homepage": "https://github.com/ashleydavis/fuzzer#readme",
+    "homepage": "https://github.com/ashleydavis/fuzzmatic#readme",
     "devDependencies": {
         "@types/jest": "^29.5.12",
         "@types/jest-json-schema": "^6.1.4",
