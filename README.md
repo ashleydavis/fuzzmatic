@@ -57,7 +57,7 @@ const data = fuzzmatic.generateData(schema);
 console.log(data);
 ```
 
-If you want to load your JSON schema from a YAML file you need to instal the YANL parser:
+If you want to load your JSON schema from a YAML file you need to install the YAML parser:
 
 ```bash
 npm install yaml
