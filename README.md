@@ -63,7 +63,7 @@ If you want to load your JSON schema from a YAML file you need to install the YA
 npm install yaml
 ```
 
-Then load and parser the YAML file, before generating data from it:
+Then load and parse the YAML file, before generating data from it:
 
 ```javascript
 const fs = require("fs");
