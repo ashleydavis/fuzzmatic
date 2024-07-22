@@ -41,7 +41,7 @@ Install it in your project:
 npm install fuzzmatic
 ```
 
-Required it in your code:
+Require it in your code:
 
 ```javascript
 const fuzzmatic = require("fuzzmatic");
@@ -76,7 +76,7 @@ console.log(data);
 
 # Development
 
-## Geting the code
+## Getting the code
 
 Clone it from GitHub:
 
