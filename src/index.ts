@@ -83,8 +83,25 @@ export interface IArraySchema extends ISchema {
     //
     // Nested schema for each item in the array.
     //
-    items?: ISchema;
+    items?: ISchema | false;
+
+    //
+    // Used for tuples where each element can have a different schema.
+    //
+    prefixItems?: ISchema[];
+
+    //
+    // Minimum items in a valid array.
+    //
+    minItems?: number;
+
+    //
+    // Maximum items in a valid array.
+    //
+    maxItems?: number;
 }
+
+export type AnySchema = INumberSchema | IStringSchema | IBooleanSchema | IObjectSchema | IArraySchema;
 
 //
 // Represents generated data.
@@ -339,28 +356,138 @@ function object(schema: IObjectSchema): IGeneratedData {
 }
 
 //
+// Create variations of a particular sized array.
+//
+function createArrayVariations(validNumberOfItems: number, prefixItemsData?: IGeneratedData[], itemsData?: IGeneratedData): IGeneratedData {
+    const valid: any[] = [];
+    const invalid: any[] = [];
+
+    const canoncialValidArray = [];
+    for (let itemIndex = 0; itemIndex < validNumberOfItems; itemIndex++) {
+        const itemData = prefixItemsData && prefixItemsData[itemIndex] || itemsData;
+        if (!itemData) {
+            throw new Error(`No item data for array index ${itemIndex}`);
+        }
+        canoncialValidArray.push(itemData.valid[0]);
+    }
+
+    valid.push(canoncialValidArray);
+
+    //
+    // Create valid variations of the array.
+    //
+    for (let itemIndex = 0; itemIndex < validNumberOfItems; itemIndex++) {
+        const itemData = prefixItemsData && prefixItemsData[itemIndex] || itemsData;
+        if (!itemData) {
+            throw new Error(`No item data for array index ${itemIndex}`);
+        }
+        for (const validItem of itemData.valid.slice(1)) {
+            valid.push([
+                ...canoncialValidArray.slice(0, itemIndex), 
+                validItem,
+                ...canoncialValidArray.slice(itemIndex + 1),
+            ]);
+        }
+    }
+
+    //
+    // Create invalid variations of the array.
+    //
+    for (let itemIndex = 0; itemIndex < validNumberOfItems; itemIndex++) {
+        const itemData = prefixItemsData && prefixItemsData[itemIndex] || itemsData;
+        if (!itemData) {
+            throw new Error(`No item data for array index ${itemIndex}`);
+        }
+        for (const invalidItem of itemData.invalid) {
+            invalid.push([
+                ...canoncialValidArray.slice(0, itemIndex), 
+                invalidItem,
+                ...canoncialValidArray.slice(itemIndex + 1),
+            ]);
+        }
+    }
+
+    return { valid, invalid };
+}
+
+//
 // Generates valid and invalid options for an array.
 //
 function array(schema: IArraySchema): IGeneratedData {
 
-    if (!schema.items) {
-        throw new Error("Array schema must have items defined.");
+    if (!schema.items && !schema.prefixItems) {
+        throw new Error("Array schema must have 'items' or 'prefixItems' defined.");
     }
 
-    const itemsData = generateData(schema.items);
+    let valid: any[] = [];
+    let invalid: any[] = [];
 
-    const valid: any[] = [];
-    const invalid: any[] = [];
+    const minItems = schema.minItems || 0;
+    const maxItems = schema.maxItems; 
+    const prefixItemsData = schema.prefixItems && schema.prefixItems.map(itemSchema => generateData(itemSchema)) || undefined;
+    const itemsData = schema.items && generateData(schema.items) || undefined;
 
-    valid.push([]);
-    for (const validItem of itemsData.valid) {
-        valid.push([validItem]);
+    if (minItems === 0) {
+        // No items is valid.
+        valid.push([]);
     }
-    valid.push([itemsData.valid[0], itemsData.valid[0]]);
-
-    for (const invalidItem of itemsData.invalid) {
-        invalid.push([invalidItem]);
+    else {
+        // An empty array is not valid.
+        invalid.push([]);
     }   
+
+    let minPositiveItems = minItems > 0 ? minItems : 1;
+
+    const validSizes = new Set<number>();
+    const invalidSizes = new Set<number>();
+
+    validSizes.add(minPositiveItems);
+
+    if (minPositiveItems > 1) {
+        invalidSizes.add(minPositiveItems - 1);
+    }
+
+    if (maxItems !== undefined) {
+        validSizes.add(maxItems);
+        if (maxItems < 100) {                
+            // Limits the size of the invalid array to 100.
+            invalidSizes.add(maxItems + 1);            
+        }
+    }
+    
+    if (minPositiveItems === 0 && (maxItems === undefined || maxItems > 1)) {
+        // One item is valid.
+        validSizes.add(1);
+    }
+
+    if (minPositiveItems < 2 && (maxItems === undefined || maxItems > 2)) {
+        // Two items are valid.
+        validSizes.add(2);
+    }        
+
+    if (maxItems === undefined || maxItems > minPositiveItems+1) { 
+        validSizes.add(minPositiveItems+1);
+    }
+
+    for (const validSize of validSizes.values()) {
+        const variations = createArrayVariations(validSize, prefixItemsData, itemsData);
+        valid = valid.concat(variations.valid);
+        invalid = invalid.concat(variations.invalid);
+    }
+    
+    for (const invalidSize of invalidSizes.values()) {
+        const invalidItems = [];
+        let latestValidItem = undefined;
+        for (let itemIndex = 0; itemIndex < invalidSize; itemIndex++) {
+            const itemData = prefixItemsData && prefixItemsData[itemIndex] || itemsData;
+            if (itemData) {
+                latestValidItem = itemData.valid[0];
+            }
+            invalidItems.push(latestValidItem);
+        }
+        invalid.push(invalidItems);
+    }
+  
 
     invalid.push(undefined);
     invalid.push(null);
@@ -368,8 +495,8 @@ function array(schema: IArraySchema): IGeneratedData {
     invalid.push("a");
     invalid.push(true);
     invalid.push({});
-
-    return { valid, invalid };
+    
+    return { valid, invalid };    
 }
 
 interface ISchemaTypeMap {

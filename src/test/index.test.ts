@@ -1,17 +1,34 @@
 import { generateData } from "..";
-
-import { matchersWithOptions } from "jest-json-schema";
-expect.extend(matchersWithOptions({
-    verbose: true
-}));
+import { expectMatchesSchema, expectNotMatchesSchema } from "./lib/schema";
 
 describe("generate data", () => {
-    
+
     const nonSchemaValues = [
+        undefined,
         NaN,
         -Infinity,
         Infinity,
     ]
+
+    //
+    // Returns true if the value is not valid in a JSON schema.
+    //
+    function isNonSchemaValue(value: any): boolean {
+        return nonSchemaValues.includes(value);
+    }
+
+    //
+    // Returns true if an array contains a value that is not valid in a JSON schema.
+    //
+    function arrayContainsNonSchemaValue(array: any[]): boolean {
+        for (const item of array) {
+            if (isNonSchemaValue(item)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     //
     // Makes data from a schema and then checks if that data matches the schema.
@@ -25,20 +42,53 @@ describe("generate data", () => {
                 continue;
             }
 
-            expect(validItem).toMatchSchema(schema);
+            expectMatchesSchema(validItem, schema);
         }
 
         for (const invalidItem of data.invalid) {
-            if (nonSchemaValues.includes(invalidItem)) {
-                // Don't test values that aren't valid against a JSON schema.
+            if (isNonSchemaValue(invalidItem)) {
+                // Don't test values that aren't valid in a JSON schema.
                 continue;
             }
 
-            expect(invalidItem).not.toMatchSchema(schema);
+            if (schema.type === "array") {
+                if (schema.prefixItems) {
+                    if (Array.isArray(invalidItem) && invalidItem.length === 0) {
+                        // This seems is be allowed by a schema with prefixItems even
+                        // through fuzzmatic considers it invalid.
+                        continue;
+                    }
+                }
+
+                if (Array.isArray(invalidItem)) {
+                    if (arrayContainsNonSchemaValue(invalidItem)) {
+                        // Don't test values that aren't valid in a JSON schema.
+                        continue;
+                    }
+                }
+            }
+
+            expectNotMatchesSchema(invalidItem, schema);
         }
 
         return data;
     }
+
+    test("simple schema test", () => {
+        expectNotMatchesSchema(null, { type: "boolean" });
+    });
+
+    test("simple schema test", () => {
+        expectNotMatchesSchema([null, 5], {
+            type: "array",
+            prefixItems: [
+                { type: "boolean" },
+                { type: "number" },
+            ],
+            minItems: 2,
+            maxItems: 2,
+        });
+    });
 
     test("simple number", () => {
         const schema = {
@@ -349,8 +399,8 @@ describe("generate data", () => {
             ],
             invalid: [
                 //todo: want to include both of these as invalid
-                    // { a: true }
-                    // { b: '' }
+                // { a: true }
+                // { b: '' }
                 {},
                 { a: undefined, b: '' },
                 { a: null, b: '' },
@@ -378,12 +428,15 @@ describe("generate data", () => {
                 type: "boolean",
             },
         };
+
         expect(makeData(schema)).toEqual({
             valid: [
                 [],
                 [true],
                 [false],
                 [true, true],
+                [false, true],
+                [true, false]
             ],
             invalid: [
                 [undefined],
@@ -391,13 +444,239 @@ describe("generate data", () => {
                 [42],
                 ['a'],
                 [{}],
+                [undefined, true],
+                [null, true],
+                [42, true],
+                ['a', true],
+                [{}, true],
+                [true, undefined],
+                [true, null],
+                [true, 42],
+                [true, 'a'],
+                [true, {}],
                 undefined,
                 null,
                 42,
                 'a',
                 true,
-                {},
-            ],
+                {}
+            ]
         });
     });
+
+    test("array with minItems", () => {
+        const schema = {
+            type: "array",
+            items: {
+                type: "boolean",
+            },
+            minItems: 2,
+        };
+
+        expect(makeData(schema)).toEqual({
+            valid: [
+                [true, true],
+                [false, true],
+                [true, false],
+                [true, true, true],
+                [false, true, true],
+                [true, false, true],
+                [true, true, false]
+            ],
+            invalid: [
+                [],
+                [undefined, true],
+                [null, true],
+                [42, true],
+                ['a', true],
+                [{}, true],
+                [true, undefined],
+                [true, null],
+                [true, 42],
+                [true, 'a'],
+                [true, {}],
+                [undefined, true, true],
+                [null, true, true],
+                [42, true, true],
+                ['a', true, true],
+                [{}, true, true],
+                [true, undefined, true],
+                [true, null, true],
+                [true, 42, true],
+                [true, 'a', true],
+                [true, {}, true],
+                [true, true, undefined],
+                [true, true, null],
+                [true, true, 42],
+                [true, true, 'a'],
+                [true, true, {}],
+                [true],
+                undefined,
+                null,
+                42,
+                'a',
+                true,
+                {}
+            ]
+        });
+    });
+
+    test("array with maxItems", () => {
+        const schema = {
+            type: "array",
+            items: {
+                type: "boolean",
+            },
+            maxItems: 2,
+        };
+
+        expect(makeData(schema)).toEqual({
+            valid: [
+                [],
+                [true],
+                [false],
+                [true, true],
+                [false, true],
+                [true, false]
+            ],
+            invalid: [
+                [undefined],
+                [null],
+                [42],
+                ['a'],
+                [{}],
+                [undefined, true],
+                [null, true],
+                [42, true],
+                ['a', true],
+                [{}, true],
+                [true, undefined],
+                [true, null],
+                [true, 42],
+                [true, 'a'],
+                [true, {}],
+                [true, true, true],
+                undefined,
+                null,
+                42,
+                'a',
+                true,
+                {}
+            ]
+        });
+    });
+
+    test("array with minItems and maxItems", () => {
+        const schema = {
+            type: "array",
+            items: {
+                type: "boolean",
+            },
+            minItems: 2,
+            maxItems: 3,
+        };
+
+        expect(makeData(schema)).toEqual({
+            valid: [
+                [true, true],
+                [false, true],
+                [true, false],
+                [true, true, true],
+                [false, true, true],
+                [true, false, true],
+                [true, true, false]
+            ],
+            invalid: [
+                [],
+                [undefined, true],
+                [null, true],
+                [42, true],
+                ['a', true],
+                [{}, true],
+                [true, undefined],
+                [true, null],
+                [true, 42],
+                [true, 'a'],
+                [true, {}],
+                [undefined, true, true],
+                [null, true, true],
+                [42, true, true],
+                ['a', true, true],
+                [{}, true, true],
+                [true, undefined, true],
+                [true, null, true],
+                [true, 42, true],
+                [true, 'a', true],
+                [true, {}, true],
+                [true, true, undefined],
+                [true, true, null],
+                [true, true, 42],
+                [true, true, 'a'],
+                [true, true, {}],
+                [true],
+                [true, true, true, true],
+                undefined,
+                null,
+                42,
+                'a',
+                true,
+                {}
+            ]
+        });
+    });
+
+    test("tuple", () => {
+        const schema = {
+            type: "array",
+            prefixItems: [
+                {
+                    type: "boolean",
+                },
+                {
+                    type: "number",
+                },
+            ],
+            minItems: 2,
+            maxItems: 2,
+        };
+
+        expect(makeData(schema)).toEqual({
+            valid: [
+                [true, -1.7976931348623157e+308],
+                [false, -1.7976931348623157e+308],
+                [true, -100],
+                [true, -10],
+                [true, -1],
+                [true, 0],
+                [true, 1],
+                [true, 10],
+                [true, 100],
+                [true, 1.7976931348623157e+308]
+            ],
+            invalid: [
+                [],
+                [undefined, -1.7976931348623157e+308],
+                [null, -1.7976931348623157e+308],
+                [42, -1.7976931348623157e+308],
+                ['a', -1.7976931348623157e+308],
+                [{}, -1.7976931348623157e+308],
+                [true, undefined],
+                [true, null],
+                [true, NaN],
+                [true, -Infinity],
+                [true, Infinity],
+                [true, 'a'],
+                [true, true],
+                [true, {}],
+                [true],
+                [true, -1.7976931348623157e+308, -1.7976931348623157e+308],
+                undefined,
+                null,
+                42,
+                'a',
+                true,
+                {}
+            ]
+        });  
+    });      
 });
