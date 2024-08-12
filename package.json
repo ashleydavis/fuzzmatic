@@ -1,6 +1,6 @@
 {
     "name": "fuzzmatic",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "Generates sets of data for fuzz testing.",
     "main": "build/index.js",
     "types": "build/index.d.ts",

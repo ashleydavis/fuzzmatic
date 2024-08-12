@@ -6,6 +6,16 @@ export interface ISchema {
     // The data type being defined.
     //
     type: string;
+
+    //
+    // The minimum length of the string.
+    //
+    minLength?: number;
+
+    //
+    // The maximum length of the string.
+    //
+    maxLength?: number;
 }
 
 //
@@ -190,8 +200,31 @@ function string(schema: IStringSchema): IGeneratedData {
     const valid: any[] = [];
     const invalid: any[] = [];
 
-    valid.push("");
-    valid.push("a");
+    const minLength = schema.minLength || 0;
+    const maxLength = schema.maxLength;
+
+    if (minLength !== 0) {
+        invalid.push(""); // Empty string not valid.
+    }
+
+    if (minLength > 1) {
+        invalid.push("a"); // Too short.
+
+        if (minLength > 2 && minLength < 100) {
+            invalid.push("a".repeat(minLength - 1)); // Too short.
+        }
+    }
+
+    valid.push("a".repeat(minLength)); // Minimum length.
+
+    if (minLength === 0 && (maxLength === undefined || maxLength > 1)) {
+        valid.push("a"); // One item should be allowed.
+    }
+
+    if (maxLength !== undefined && maxLength < 100) {         
+        valid.push("a".repeat(maxLength));
+        invalid.push("a".repeat(maxLength + 1)); // Limit the length of the string to 100. Don't want to go overboard.
+    }
 
     invalid.push(undefined);
     invalid.push(null);

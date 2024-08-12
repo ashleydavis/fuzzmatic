@@ -236,6 +236,72 @@ describe("generate data", () => {
         });
     });
 
+    test("string with minLength", () => {
+        const schema = {
+            type: "string",
+            minLength: 1,
+        };
+        expect(makeData(schema)).toEqual({
+            valid: [
+                "a",
+            ],
+            invalid: [
+                "",
+                undefined,
+                null,
+                42,
+                true,
+                {},
+            ],
+        });
+    });    
+
+    test("string with maxLength", () => {
+        const schema = {
+            type: "string",
+            maxLength: 3,
+        };
+        expect(makeData(schema)).toEqual({
+            valid: [
+                "",
+                "a",
+                "aaa",
+            ],
+            invalid: [
+                "aaaa",
+                undefined,
+                null,
+                42,
+                true,
+                {},
+            ],
+        });
+    });    
+
+    test("string with minLength and maxLength", () => {
+        const schema = {
+            type: "string",
+            minLength: 2,
+            maxLength: 6,
+        };
+        expect(makeData(schema)).toEqual({
+            valid: [
+                "aa",
+                "aaaaaa",
+            ],
+            invalid: [
+                "",
+                "a",
+                "aaaaaaa",
+                undefined,
+                null,
+                42,
+                true,
+                {},
+            ],
+        });
+    });    
+
     test("boolean", () => {
         const schema = {
             type: "boolean",
@@ -375,7 +441,7 @@ describe("generate data", () => {
         })
     });
 
-    test("object with a both values required", () => {
+    test("object with both values required", () => {
         const schema = {
             type: "object",
             properties: {
@@ -388,6 +454,7 @@ describe("generate data", () => {
             },
             required: ["a", "b"],
         };
+        
         expect(makeData(schema)).toEqual({
             valid: [
                 { a: true, b: '' },
