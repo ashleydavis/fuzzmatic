@@ -6,6 +6,7 @@
     "types": "build/index.d.ts",
     "scripts": {
         "start": "node ./build/cli.js ./src/test/schemas/simple-number.yaml",
+        "blog-post": "node ./build/cli.js ./src/test/schemas/blog-post.yaml",
         "s": "npm start",
         "start:dev": "nodemon",
         "sd": "npm run start:dev",

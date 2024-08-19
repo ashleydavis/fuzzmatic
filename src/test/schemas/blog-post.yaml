@@ -1,0 +1,17 @@
+title: POST /posts payload
+type: object
+required:
+  - userId
+  - title
+  - body
+properties:
+  userId:
+    type: number
+    minimum: 1
+  title:
+    type: string
+    minLength: 1
+  body:
+    type: string
+    minLength: 1
+additionalProperties: false
